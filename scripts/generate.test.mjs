@@ -18,7 +18,7 @@ test('release time: Friday 15:30 New York, summer and winter', () => {
 });
 
 test('records: release minutes, nets, shares of open interest; a missing value is empty', () => {
-  const recs = recordsOf(file, '2016-01-01');
+  const recs = recordsOf(file, '2022-01-01');
   assert.equal(recs.length, 2);
   assert.equal(recs[1], `${releaseOf('2026-10-27') / 60000},-143894,114484,-16.57,`);
   assert.equal(recs[1].split(',').length, 5, 'Pine reads five fields');
@@ -40,7 +40,7 @@ test('the data block has every market and no quote inside a literal', () => {
 
 test('the template renders with nothing left to fill', () => {
   const template = fs.readFileSync(new URL('../pine/template.pine', import.meta.url), 'utf8');
-  const out = render(template, { EUR: ['1,2,3,4,5'] }, '2016-01-05', '2026-10-27');
+  const out = render(template, { EUR: ['1,2,3,4,5'] }, '2022-01-04', '2026-10-27');
   assert.doesNotMatch(out, /\{\{/);
   assert.match(out, /^\/\/@version=6$/m);
   assert.match(out, /chunksOf\(string m\) =>/);

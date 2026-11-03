@@ -5,7 +5,7 @@
 //
 //   node scripts/generate.mjs                       read github.com/ForexiaPro/cot-data
 //   node scripts/generate.mjs --data ../cot-data/data  read a local copy
-//   node scripts/generate.mjs --since 2016-01-01    the first report kept (default)
+//   node scripts/generate.mjs --since 2022-01-01    the first report kept (default; TradingView's 100,000-token limit allows about five years)
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -79,7 +79,7 @@ async function main() {
     return i > 0 ? process.argv[i + 1] : fallback;
   };
   const dataDir = arg('data');
-  const since = arg('since', '2016-01-01');
+  const since = arg('since', '2022-01-01');
   const byMarket = {};
   let first = '9999';
   let last = '';

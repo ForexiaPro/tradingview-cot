@@ -24,13 +24,13 @@ The figures are the CFTC's positions, as published in [ForexiaPro/cot-data](http
 ```sh
 node scripts/generate.mjs                          # from github.com/ForexiaPro/cot-data
 node scripts/generate.mjs --data ../cot-data/data  # from a local copy
-node scripts/generate.mjs --since 2012-01-01       # keep more history (default 2016)
+node scripts/generate.mjs --since 2012-01-01       # keep more history (default 2022; TradingView allows about five years in one script)
 npm test
 ```
 
 ## Why the data is inside the script
 
-Pine reads no files and calls no web address, so the generator writes each market's weekly records into the script as text, parsed once on the first bar (about 200 KB for ten markets since 2016). The cost is a republish to bring in each week's report.
+Pine reads no files and calls no web address, so the generator writes each market's weekly records into the script as text, parsed once on the first bar (about 95 KB for ten markets since 2022, inside TradingView's 100,000-token limit). The cost is a republish to bring in each week's report.
 
 TradingView does carry the CFTC's raw COT figures itself (the `COT:` symbols, and its `LibraryCOT` library), which a script can read with `request.security()` and which update without a republish. This indicator ships cot-data's own figures instead, so every number matches the dataset, release timing included. A live variant on TradingView's feed is possible: the owner decides whether to build it (it would need no weekly republish).
 
