@@ -1,0 +1,169 @@
+// Open source under the MIT License.
+// © Forexia
+//
+// COT Positioning: the CFTC's Commitments of Traders for the chart's currency or gold:
+// net non-commercial (large speculators) and net commercial (hedgers) positions, in
+// contracts or as a share of open interest, with the latest report in a table.
+//
+// The weekly CFTC figures are written into this script as text (Pine reads no files),
+// regenerated each week. Data: reports of {{FIRST}} to {{LAST}}.
+// Generated from template.pine: edit the template, not the generated file.
+
+//@version=6
+indicator("COT Positioning: Speculators and Commercials", shorttitle = "COT Positioning", overlay = false, precision = 2)
+
+// ─── Inputs ────────────────────────────────────────────────────────────────
+const string MKT_AUTO = "Auto (from the chart)"
+string marketIn = input.string(MKT_AUTO, "Market", options = [MKT_AUTO, "EUR", "GBP", "JPY", "CHF", "CAD", "AUD", "NZD", "MXN", "US dollar index", "Gold"])
+const string SHOW_NET = "Net positions (contracts)"
+const string SHOW_PCT = "Net as % of open interest"
+string showIn = input.string(SHOW_NET, "Show", options = [SHOW_NET, SHOW_PCT])
+bool pairTerms = input.bool(true, "In the chart pair's terms", tooltip = "A currency future is quoted against the dollar: long yen futures is short USDJPY. On a chart where the dollar comes first (USDJPY, USDCHF, USDCAD, USDMXN) this turns the positions over.")
+bool showComm = input.bool(true, "Show commercials")
+bool showTable = input.bool(true, "Show the latest report")
+color specColor = input.color(#2962FF, "Non-commercial (speculators)")
+color commColor = input.color(#FF9800, "Commercial (hedgers)")
+
+// ─── The data ──────────────────────────────────────────────────────────────
+// One record a weekly report: the release time (minutes since 1970, UTC, the Friday
+// at 15:30 New York), net non-commercial, net commercial, net non-commercial as % of
+// open interest, net commercial as % of open interest. Positions in the future's
+// terms. Records are space-separated.
+{{DATA}}
+
+// ─── Which market ──────────────────────────────────────────────────────────
+const string MARKETS = "EUR GBP JPY CHF CAD AUD NZD MXN"
+inList(string c) => str.length(c) == 3 and str.contains(MARKETS, c)
+
+rootMarket(string r) =>
+    switch r
+        "6E" => "EUR"
+        "6B" => "GBP"
+        "6J" => "JPY"
+        "6S" => "CHF"
+        "6C" => "CAD"
+        "6A" => "AUD"
+        "6N" => "NZD"
+        "6M" => "MXN"
+        "DX" => "USD"
+        "GC" => "XAU"
+        "MGC" => "XAU"
+        => ""
+
+autoMarket() =>
+    string base = syminfo.basecurrency
+    string quote = syminfo.currency
+    string tk = syminfo.ticker
+    string fromRoot = rootMarket(syminfo.root)
+    string m = ""
+    bool flip = false
+    if fromRoot != ""
+        m := fromRoot
+    else if base == "XAU" or str.startswith(tk, "XAU") or str.startswith(tk, "GOLD")
+        m := "XAU"
+    else if str.startswith(tk, "DXY") or str.startswith(tk, "USDX")
+        m := "USD"
+    else if inList(base)
+        m := base
+    else if base == "USD" and inList(quote)
+        m := quote
+        flip := true
+    [m, flip]
+
+pickMarket() =>
+    string m = ""
+    bool flip = false
+    if marketIn == MKT_AUTO
+        [am, af] = autoMarket()
+        m := am
+        flip := af
+    else
+        m := marketIn == "US dollar index" ? "USD" : marketIn == "Gold" ? "XAU" : marketIn
+        flip := syminfo.basecurrency == "USD" and syminfo.currency == m
+    [m, flip and pairTerms]
+
+[market, flip] = pickMarket()
+
+nameOf(string m) =>
+    switch m
+        "EUR" => "Euro FX"
+        "GBP" => "British pound"
+        "JPY" => "Japanese yen"
+        "CHF" => "Swiss franc"
+        "CAD" => "Canadian dollar"
+        "AUD" => "Australian dollar"
+        "NZD" => "New Zealand dollar"
+        "MXN" => "Mexican peso"
+        "USD" => "US dollar index"
+        "XAU" => "Gold"
+        => "no market"
+
+// ─── Parse once ────────────────────────────────────────────────────────────
+var array<float> tRel = array.new<float>()
+var array<float> specNet = array.new<float>()
+var array<float> commNet = array.new<float>()
+var array<float> specPct = array.new<float>()
+var array<float> commPct = array.new<float>()
+
+if barstate.isfirst and market != ""
+    array<string> chunks = chunksOf(market)
+    for chunk in chunks
+        for rec in str.split(chunk, " ")
+            array<string> f = str.split(rec, ",")
+            if array.size(f) == 5
+                array.push(tRel, str.tonumber(array.get(f, 0)) * 60000.0)
+                array.push(specNet, str.tonumber(array.get(f, 1)))
+                array.push(commNet, str.tonumber(array.get(f, 2)))
+                array.push(specPct, str.tonumber(array.get(f, 3)))
+                array.push(commPct, str.tonumber(array.get(f, 4)))
+
+// The latest report released by the close of this bar.
+var int k = -1
+float barEnd = na(time_close) ? time : time_close
+while k + 1 < array.size(tRel) and array.get(tRel, k + 1) <= barEnd
+    k += 1
+
+float sign = flip ? -1.0 : 1.0
+float sNet = k >= 0 ? sign * array.get(specNet, k) : na
+float cNet = k >= 0 ? sign * array.get(commNet, k) : na
+float sPct = k >= 0 ? sign * array.get(specPct, k) : na
+float cPct = k >= 0 ? sign * array.get(commPct, k) : na
+float sChange = k >= 1 ? sign * (array.get(specNet, k) - array.get(specNet, k - 1)) : na
+
+bool pctMode = showIn == SHOW_PCT
+
+// ─── Plots ─────────────────────────────────────────────────────────────────
+plot(pctMode ? na : sNet, "Net non-commercial", sNet >= 0 ? color.new(specColor, 30) : color.new(specColor, 60), style = plot.style_columns, precision = 0)
+plot(pctMode or not showComm ? na : cNet, "Net commercial", commColor, 2, precision = 0)
+plot(pctMode ? sPct : na, "Net non-commercial, % of OI", sPct >= 0 ? color.new(specColor, 30) : color.new(specColor, 60), style = plot.style_columns, precision = 2)
+plot(pctMode and showComm ? cPct : na, "Net commercial, % of OI", commColor, 2, precision = 2)
+hline(0, "Zero", color.new(color.gray, 60))
+
+// ─── Alerts: the speculators' net position crosses zero ─────────────────────
+bool flipLong = not na(sNet) and not na(sNet[1]) and sNet > 0 and sNet[1] <= 0
+bool flipShort = not na(sNet) and not na(sNet[1]) and sNet < 0 and sNet[1] >= 0
+alertcondition(flipLong, "Speculators flip net long", "COT: net non-commercial position crossed above zero (net long)")
+alertcondition(flipShort, "Speculators flip net short", "COT: net non-commercial position crossed below zero (net short)")
+
+// ─── The latest report ─────────────────────────────────────────────────────
+var table info = table.new(position.top_right, 2, 7, bgcolor = color.new(color.black, 85), border_width = 1)
+if showTable and barstate.islast
+    string terms = flip ? " (" + syminfo.ticker + " terms)" : ""
+    table.cell(info, 0, 0, nameOf(market) + terms, text_color = chart.fg_color, text_size = size.small)
+    if k < 0
+        table.cell(info, 0, 1, market == "" ? "Pick a market in the settings" : "No report yet", text_color = chart.fg_color, text_size = size.small)
+    else
+        float tLast = array.get(tRel, k)
+        table.cell(info, 0, 1, "Report of", text_color = chart.fg_color, text_size = size.small)
+        table.cell(info, 1, 1, str.format_time(int(tLast) - 3 * 86400000, "yyyy-MM-dd", "America/New_York"), text_color = chart.fg_color, text_size = size.small)
+        table.cell(info, 0, 2, "Net speculators", text_color = chart.fg_color, text_size = size.small)
+        table.cell(info, 1, 2, str.tostring(sNet, "#,###"), text_color = sNet >= 0 ? color.green : color.red, text_size = size.small)
+        table.cell(info, 0, 3, "Change on the week", text_color = chart.fg_color, text_size = size.small)
+        table.cell(info, 1, 3, na(sChange) ? "-" : (sChange > 0 ? "+" : "") + str.tostring(sChange, "#,###"), text_color = chart.fg_color, text_size = size.small)
+        table.cell(info, 0, 4, "% of open interest", text_color = chart.fg_color, text_size = size.small)
+        table.cell(info, 1, 4, na(sPct) ? "-" : str.tostring(sPct, "#.##") + "%", text_color = chart.fg_color, text_size = size.small)
+        table.cell(info, 0, 5, "Net commercials", text_color = chart.fg_color, text_size = size.small)
+        table.cell(info, 1, 5, str.tostring(cNet, "#,###"), text_color = chart.fg_color, text_size = size.small)
+        bool stale = timenow - tLast > 10 * 86400000
+        table.cell(info, 0, 6, stale ? "Data ends" : "Data to", text_color = stale ? color.orange : color.gray, text_size = size.tiny)
+        table.cell(info, 1, 6, stale ? "{{LAST}}: update" : "{{LAST}}", text_color = stale ? color.orange : color.gray, text_size = size.tiny)

@@ -1,0 +1,46 @@
+COT Positioning: Speculators and Commercials
+
+This indicator shows the CFTC's weekly Commitments of Traders (COT) report for the currency future behind the chart, or for gold, in a separate pane: where large speculators and commercial hedgers stand, net long or net short.
+
+WHAT IT SHOWS
+
+Two views, chosen in the settings:
+
+1. Net positions (default). Net non-commercial contracts (large speculators: long minus short) as columns, net commercial contracts (hedgers) as a line.
+2. Net as % of open interest. The same two groups, each net position divided by the open interest of that week.
+
+A table in the corner gives the latest report: its date, the speculators' net position, its change on the week, that position as a share of open interest, and the commercials' net position.
+
+WHY THE SHARE OF OPEN INTEREST
+
+Open interest in a currency future grows and shrinks over the years. A net position of 50,000 contracts means more when 150,000 are open than when 700,000 are. The percentage view lets weeks years apart compare fairly.
+
+MARKETS
+
+Euro, British pound, Japanese yen, Swiss franc, Canadian dollar, Australian dollar, New Zealand dollar, Mexican peso, the US dollar index and gold. In Auto mode the market is read from the chart: the base currency of a pair against the dollar (EURUSD, GBPUSD...), the quote currency when the dollar comes first (USDJPY, USDCHF, USDCAD, USDMXN), gold on XAUUSD or gold futures, the dollar index on DXY, and the currency futures themselves (6E, 6B, 6J...). On a cross such as EURJPY it uses the base currency; pick another market in the settings if you prefer.
+
+THE PAIR'S TERMS
+
+The CFTC counts positions in the future: long yen futures means long the yen, which is short USDJPY. With "In the chart pair's terms" on (the default), the indicator turns the positions over on charts where the dollar comes first, so that up always means long the pair on your chart.
+
+TIMING
+
+The report counts positions on Tuesday and is released on Friday at 15:30 New York time. The indicator shows each report from its Friday release, not from the Tuesday, so a backtest never sees a report before it was public. A US holiday can move a release to the next business day; those weeks may show a day early.
+
+DATA AND UPDATES
+
+Pine Script cannot read outside files, so the weekly figures from January 2016 are written into the script, regenerated every week after the release and published as an update. The table says which report the data runs to and warns when it is more than ten days old. The source is the CFTC's public reporting (legacy report, futures only), which is public domain.
+
+HOW TO READ IT
+
+The chart shows positions as reported, three days after they were counted. Speculators can stay long or short for months, and commercial hedgers usually mirror them. Use it as context alongside price, not as a trigger.
+
+ALERTS
+
+Two alert conditions: the speculators' net position crossing above zero (flipping net long), and crossing below zero (flipping net short). They follow the pair's terms setting.
+
+SETTINGS
+
+Market, view, pair's terms, show or hide the commercials, the table and colours.
+
+This is not investment advice.

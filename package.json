@@ -1,0 +1,11 @@
+{
+  "name": "tradingview-cot",
+  "private": true,
+  "type": "module",
+  "description": "A TradingView indicator: CFTC COT positions (net speculators and commercials) for the chart's currency or gold.",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "generate": "node scripts/generate.mjs",
+    "test": "node --test scripts/generate.test.mjs"
+  }
+}

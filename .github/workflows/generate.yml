@@ -1,0 +1,35 @@
+name: Regenerate the Pine script
+
+# Saturday, after cot-data's Friday update (and its Saturday retry at 14:00 UTC).
+# The regenerated script is committed; TradingView has no publishing API, so the
+# owner pastes it into the Pine editor and publishes an update by hand.
+on:
+  schedule:
+    - cron: '0 16 * * 6'
+    - cron: '0 23 * * 2'   # holiday weeks, after cot-data's Tuesday run
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node scripts/generate.mjs
+      - run: node --test scripts/generate.test.mjs
+      - name: Commit the new script
+        run: |
+          git add pine
+          if git diff --cached --quiet; then
+            echo "No new report."
+            exit 0
+          fi
+          git config user.name "tradingview-cot"
+          git config user.email "tradingview-cot@users.noreply.github.com"
+          git commit -m "COT data to $(grep -o 'reports of [0-9-]* to [0-9-]*' pine/cot-positioning.pine | head -1 | awk '{print $NF}')"
+          git push
