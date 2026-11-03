@@ -39,7 +39,7 @@ TradingView does carry the CFTC's raw COT figures itself (the `COT:` symbols, an
 TradingView has no publishing API. Each update is by hand:
 
 1. Open the Pine editor, paste `pine/cot-positioning.pine`, compile (check that it compiles: it has not been compiled outside TradingView), and add it to a clean chart (EURUSD, weekly) with nothing else on it, symbol, timeframe and the script's name visible in the status line.
-2. The first time: **Publish script**, public, open source, category Volume or Statistics; title `COT Positioning: Speculators and Commercials`; description from `tradingview/description.txt`.
+2. Published: https://www.tradingview.com/script/kEmbCF9j-COT-Positioning-Speculators-and-Commercials/ . The first time: **Publish script**, public, open source, category Volume or Statistics; title `COT Positioning: Speculators and Commercials`; description from `tradingview/description.txt`.
 3. Each week (or month): **Publish script → Update existing script**, with a release note such as "Data to 2026-10-27".
 
 **House Rules** ([script publishing rules](https://www.tradingview.com/support/solutions/43000590599-script-publishing-rules/), [House Rules](https://www.tradingview.com/house-rules/)), checked on 2026-11-02:
